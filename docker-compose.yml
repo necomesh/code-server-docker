@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  code-server:
+    build: .
+    container_name: code-server
+    ports:
+      - "8080:8080"
+    environment:
+      - PASSWORD=${PASSWORD:-}  # 设置密码,留空则无需密码
+      - PORT=8080
+      - TZ=Asia/Shanghai
+    volumes:
+      # 工作空间 - 你的项目代码
+      - ./workspace:/root/workspace
+      
+      # code-server 配置
+      - ./config/code-server:/root/.config/code-server
+      
+      # SSH 密钥 - 用于 git ssh 认证
+      - ./config/ssh:/root/.ssh
+      
+      # code-server 扩展和数据
+      - code-server-data:/root/.local/share/code-server
+      
+      # 各种构建工具的缓存
+      - cache-root:/root/.cache           # pip, uv, go, rust 等通用缓存
+      - npm-cache:/root/.npm              # npm 缓存
+      - pnpm-store:/root/.pnpm-store      # pnpm store
+      - yarn-cache:/root/.yarn            # yarn 缓存
+      - maven-repo:/root/.m2              # Maven 本地仓库
+      - gradle-cache:/root/.gradle        # Gradle 缓存
+      - cargo-registry:/root/.cargo       # Cargo registry 和缓存
+      - go-pkg:/root/go/pkg               # Go 包缓存
+    
+    restart: unless-stopped
+    
+    # GPU 支持 (如果需要)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  code-server-data:
+  cache-root:
+  npm-cache:
+  pnpm-store:
+  yarn-cache:
+  maven-repo:
+  gradle-cache:
+  cargo-registry:
+  go-pkg:
