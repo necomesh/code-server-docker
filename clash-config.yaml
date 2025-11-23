@@ -1,0 +1,72 @@
+# Clash 配置示例文件
+# 将此文件复制到 ./config/clash/config.yaml 并修改为你的订阅配置
+
+# HTTP(S) 代理端口
+port: 7890
+# SOCKS5 代理端口
+socks-port: 7891
+# 允许局域网连接
+allow-lan: true
+# 绑定地址
+bind-address: '*'
+# Clash 运行模式：Rule（规则） / Global（全局代理）/ Direct（全局直连）
+mode: Rule
+# 日志级别
+log-level: info
+# 外部控制器
+external-controller: 0.0.0.0:9090
+# 外部 UI (可选)
+# external-ui: ui
+
+# DNS 配置
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  nameserver:
+    - 223.5.5.5
+    - 114.114.114.114
+  fallback:
+    - 8.8.8.8
+    - 1.1.1.1
+
+# 代理节点（需要替换为你的实际节点）
+proxies:
+  - name: "示例节点"
+    type: ss
+    server: server.example.com
+    port: 443
+    cipher: aes-256-gcm
+    password: "your-password"
+
+# 代理组
+proxy-groups:
+  - name: "PROXY"
+    type: select
+    proxies:
+      - "示例节点"
+      - DIRECT
+
+# 规则
+rules:
+  # 局域网直连
+  - DOMAIN-SUFFIX,local,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  
+  # 常见代理域名
+  - DOMAIN-SUFFIX,google.com,PROXY
+  - DOMAIN-SUFFIX,github.com,PROXY
+  - DOMAIN-SUFFIX,githubusercontent.com,PROXY
+  - DOMAIN-SUFFIX,docker.com,PROXY
+  - DOMAIN-SUFFIX,docker.io,PROXY
+  - DOMAIN-SUFFIX,npmjs.org,PROXY
+  - DOMAIN-SUFFIX,pypi.org,PROXY
+  
+  # 默认规则
+  - GEOIP,CN,DIRECT
+  - MATCH,PROXY

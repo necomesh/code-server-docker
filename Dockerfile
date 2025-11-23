@@ -5,9 +5,18 @@ ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update
-RUN apt-get install -y curl wget git vim nano sudo build-essential cmake pkg-config zip  unzip tar ca-certificates gnupg lsb-release htop supervisor
+RUN apt-get install -y curl wget git vim nano sudo build-essential cmake pkg-config zip  unzip tar ca-certificates gnupg lsb-release htop supervisor gzip lsof
 
 RUN mkdir -p /var/log/supervisor
+
+# 安装 Clash
+RUN mkdir -p /opt/clash && \
+    cd /opt/clash && \
+    wget https://github.com/MetaCubeX/mihomo/releases/download/v1.18.10/mihomo-linux-amd64-v1.18.10.gz && \
+    gzip -d mihomo-linux-amd64-v1.18.10.gz && \
+    mv mihomo-linux-amd64-v1.18.10 clash && \
+    chmod +x clash && \
+    mkdir -p /root/.config/clash
 
 RUN apt-get install -y python3 python3-pip
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -35,6 +44,12 @@ ENV PATH="${GOPATH}/bin:${GOROOT}/bin:${PATH}"
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.cn,direct
 
+# Clash 代理环境变量 (可通过 docker-compose 覆盖)
+ENV HTTP_PROXY=""
+ENV HTTPS_PROXY=""
+ENV ALL_PROXY=""
+ENV NO_PROXY="localhost,127.0.0.1"
+
 RUN apt-get install -y openjdk-21-jdk maven gradle
 
 RUN apt-get install -y  cargo rustc
@@ -59,7 +74,6 @@ RUN code-server --install-extension ms-python.python
 RUN code-server --install-extension ms-python.autopep8
 RUN code-server --install-extension ms-ceintl.vscode-language-pack-zh-hans
 RUN code-server --install-extension kamikillerto.vscode-colorize
-RUN code-server --install-extension vikiea.debug-console-beautify
 RUN code-server --install-extension batisteo.vscode-django
 RUN code-server --install-extension hediet.vscode-drawio
 RUN code-server --install-extension dbaeumer.vscode-eslint
@@ -81,6 +95,7 @@ ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # 配置 volumes 用于持久化数据
 VOLUME ["/root/workspace"]                  # 工作空间
 VOLUME ["/root/.config/code-server"]        # code-server 配置
+VOLUME ["/root/.config/clash"]              # Clash 配置
 VOLUME ["/root/.ssh"]                       # SSH 密钥
 VOLUME ["/root/.local/share/code-server"]   # code-server 扩展和数据
 VOLUME ["/root/.cache"]                     # pip、go、rust 等工具的缓存
@@ -91,5 +106,7 @@ VOLUME ["/root/.m2"]                        # Maven 仓库缓存
 VOLUME ["/root/.gradle"]                    # Gradle 缓存
 VOLUME ["/root/.cargo"]                     # Cargo 缓存
 VOLUME ["/root/go/pkg"]                     # Go 包缓存
+
+EXPOSE 8080 7890 7891 9090
 
 ENTRYPOINT ["/usr/local/bin/start-code-server.sh"]

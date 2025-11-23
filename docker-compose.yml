@@ -5,17 +5,28 @@ services:
     build: .
     container_name: code-server
     ports:
-      - "8080:8080"
+      - "8080:8080"      # code-server Web UI
+      - "7890:7890"      # Clash HTTP 代理
+      - "7891:7891"      # Clash SOCKS5 代理
+      - "9090:9090"      # Clash 外部控制器 (Dashboard)
     environment:
       - PASSWORD=${PASSWORD:-}  # 设置密码,留空则无需密码
       - PORT=8080
       - TZ=Asia/Shanghai
+      # 启用代理（Clash 启动后自动生效）
+      - HTTP_PROXY=http://127.0.0.1:7890
+      - HTTPS_PROXY=http://127.0.0.1:7890
+      - ALL_PROXY=socks5://127.0.0.1:7891
+      - NO_PROXY=localhost,127.0.0.1
     volumes:
       # 工作空间 - 你的项目代码
       - ./workspace:/root/workspace
       
       # code-server 配置
       - ./config/code-server:/root/.config/code-server
+      
+      # Clash 配置（需要将你的 config.yaml 放在这里）
+      - ./config/clash:/root/.config/clash
       
       # SSH 密钥 - 用于 git ssh 认证
       - ./config/ssh:/root/.ssh
